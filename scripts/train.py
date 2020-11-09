@@ -42,7 +42,7 @@ def parse_args():
                         help='backbone name (default: vgg16)')
     parser.add_argument('--dataset', type=str, default='pascal_voc',
                         choices=['pascal_voc', 'pascal_aug', 'ade20k',
-                                 'citys', 'sbu'],
+                                 'citys', 'sbu', 'qgame'],
                         help='dataset name (default: pascal_voc)')
     parser.add_argument('--base-size', type=int, default=520,
                         help='base image size')
@@ -253,6 +253,14 @@ class Trainer(object):
         logger.info(
             "Total training time: {} ({:.4f}s / it)".format(
                 total_training_str, total_training_time / max_iters))
+        dummy_input = torch.randn(1, 3, 256, 256)
+        if(args.device == 'cuda'):
+            dummy_input = dummy_input.cuda()
+        input_names = [ "input_1" ]
+        output_names = [ "output1" ]
+        today = datetime.date.today()
+        model_name = "bisenet-" + str(today) + ".onnx"
+        torch.onnx.export(self.model, dummy_input, "trained_model/" +model_name, verbose=True, input_names=input_names, output_names=output_names, opset_version=11)
 
     def validation(self):
         # total_inter, total_union, total_correct, total_label = 0, 0, 0, 0

@@ -12,8 +12,9 @@ class SBUSegmentation(SegmentationDataset):
     """
     NUM_CLASS = 2
 
-    def __init__(self, root='../datasets/sbu', split='train', mode=None, transform=None, **kwargs):
+    def __init__(self, root='datasets/sbu', split='train', mode=None, transform=None, **kwargs):
         super(SBUSegmentation, self).__init__(root, split, mode, transform, **kwargs)
+        print(os.getcwd())
         assert os.path.exists(self.root)
         self.images, self.masks = _get_sbu_pairs(self.root, self.split)
         assert (len(self.images) == len(self.masks))
