@@ -40,5 +40,5 @@ class LiveSegmentation(SegmentationDataset):
         return im, mask, os.path.basename(image_path)
 
     def __len__(self):
-        # return len(self.items)
-        return 32
+        return len(self.items)
+        # return 32
