@@ -1,5 +1,6 @@
 """SBU Shadow  Segmentation Dataset."""
 import os
+from numpy.core.fromnumeric import shape
 import torch
 import numpy as np
 
@@ -39,6 +40,7 @@ class SBUSegmentation(SegmentationDataset):
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
+        print("img shape = " + str(shape(img)) + " mask shape = " + str(shape(mask)))
         return img, mask, os.path.basename(self.images[index])
 
     def _mask_transform(self, mask):
