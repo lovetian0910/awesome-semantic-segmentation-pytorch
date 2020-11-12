@@ -3,6 +3,7 @@ from numpy.core.fromnumeric import shape
 import torch
 import numpy as np
 from PIL import Image
+from torchvision import transforms
 from .segbase import SegmentationDataset
 
 class LiveSegmentation(SegmentationDataset):
@@ -33,10 +34,12 @@ class LiveSegmentation(SegmentationDataset):
             assert self.mode == 'testval'
             img, mask = self._img_transform(img), self._mask_transform(mask)
         # general resize, normalize and toTensor
-        if self.transform is not None:
-            img = self.transform(img)
+        # if self.transform is not None:
+        #     img = self.transform(img)
+        img = np.float32(img) / 127.5 - 1
+        input_tensor = transforms.ToTensor()
+        img = input_tensor(img)
         mask = mask[:,:,0]
-        print(str(shape(img)) + " " + str(shape(mask)))
         return img, mask, os.path.basename(image_path)
         # img = cv2.imread(image_path, 1)
         # label_img = cv2.imread(label_path, 1)
@@ -57,8 +60,8 @@ class LiveSegmentation(SegmentationDataset):
         # return im, mask, os.path.basename(image_path)
 
     def __len__(self):
-        # return len(self.items)
-        return 32
+        return len(self.items)
+        # return 32
 
     def _mask_transform(self, mask):
         target = np.array(mask).astype('int32')
