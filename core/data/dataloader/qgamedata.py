@@ -1,4 +1,5 @@
 import os
+from numpy.core.fromnumeric import shape
 import torch
 import numpy as np
 from PIL import Image
@@ -35,6 +36,7 @@ class LiveSegmentation(SegmentationDataset):
         if self.transform is not None:
             img = self.transform(img)
         mask = mask[:,:,0]
+        print(str(shape(img)) + " " + str(shape(mask)))
         return img, mask, os.path.basename(image_path)
         # img = cv2.imread(image_path, 1)
         # label_img = cv2.imread(label_path, 1)
@@ -55,10 +57,9 @@ class LiveSegmentation(SegmentationDataset):
         # return im, mask, os.path.basename(image_path)
 
     def __len__(self):
-        return len(self.items)
-        # return 32
+        # return len(self.items)
+        return 32
 
     def _mask_transform(self, mask):
         target = np.array(mask).astype('int32')
-        target[target > 0] = 1
         return torch.from_numpy(target).long()

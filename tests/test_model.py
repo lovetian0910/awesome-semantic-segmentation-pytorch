@@ -3,6 +3,7 @@ import argparse
 import time
 import os
 import sys
+from numpy.core.fromnumeric import shape
 
 import torch
 import torch.nn as nn
@@ -57,14 +58,15 @@ def parse_args():
 class VOCSegmentation(object):
     def __init__(self):
         super(VOCSegmentation, self).__init__()
-        self.img = Image.open('test_img.jpg').convert('RGB')
-        self.mask = Image.open('test_mask.png')
+        self.img = Image.open('tests/test_img.jpg').convert('RGB')
+        self.mask = Image.open('tests/test_mask.png')
 
-        self.img = self.img.resize((504, 368), Image.BILINEAR)
-        self.mask = self.mask.resize((504, 368), Image.NEAREST)
+        self.img = self.img.resize((768, 768), Image.BILINEAR)
+        self.mask = self.mask.resize((768, 768), Image.NEAREST)
 
     def get(self):
         img, mask = self._img_transform(self.img), self._mask_transform(self.mask)
+        print(str(shape(img)) + " " + str(shape(mask)))
         return img, mask
 
     def _img_transform(self, img):
