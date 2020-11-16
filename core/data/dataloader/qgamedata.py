@@ -7,7 +7,7 @@ from torchvision import transforms
 from .segbase import SegmentationDataset
 
 class LiveSegmentation(SegmentationDataset):
-    NUM_CLASS = 5
+    NUM_CLASS = 2
     def __init__(self, file_path = "live_more_", root='../QGameData/', split=' ', mode=None, transform=None, **kwargs):
         super(LiveSegmentation, self).__init__(root, split, mode, transform, **kwargs)
         self.root_path = root
@@ -60,9 +60,10 @@ class LiveSegmentation(SegmentationDataset):
         # return im, mask, os.path.basename(image_path)
 
     def __len__(self):
-        return len(self.items)
-        # return 32
+        # return len(self.items)
+        return 32
 
     def _mask_transform(self, mask):
         target = np.array(mask).astype('int32')
+        target[target > 0] = 1
         return torch.from_numpy(target).long()

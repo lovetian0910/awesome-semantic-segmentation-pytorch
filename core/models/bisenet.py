@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from core.models.base_models.resnet import resnet18
+from core.models.base_models.resnet import resnet18, resnet50
 from core.nn import _ConvBNReLU
 
 __all__ = ['BiSeNet', 'get_bisenet', 'get_bisenet_resnet18_citys']
@@ -118,6 +118,8 @@ class ContextPath(nn.Module):
         super(ContextPath, self).__init__()
         if backbone == 'resnet18':
             pretrained = resnet18(pretrained=pretrained_base, **kwargs)
+        elif backbone == 'resnet50':
+            pretrained = resnet50(pretrained=pretrained_base, **kwargs)
         else:
             raise RuntimeError('unknown backbone: {}'.format(backbone))
         self.conv1 = pretrained.conv1
@@ -130,7 +132,10 @@ class ContextPath(nn.Module):
         self.layer4 = pretrained.layer4
 
         inter_channels = 128
-        self.global_context = _GlobalAvgPooling(512, inter_channels, norm_layer)
+        in_channels = 512
+        if backbone == 'resnet50':
+            in_channels = 2048
+        self.global_context = _GlobalAvgPooling(in_channels, inter_channels, norm_layer)
 
         self.arms = nn.ModuleList(
             [AttentionRefinmentModule(512, inter_channels, norm_layer, **kwargs),

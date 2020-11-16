@@ -17,11 +17,13 @@ def loadImg(img_name):
     # image transform
     input_transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
+        # transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
     ])
     img = Image.open(img_name).convert('RGB')
     img = img.resize((256, 256), Image.NEAREST)
-    input = input_transform(img)
+    np_array = np.array(img).astype(np.float32)
+    np_array = np_array / 127.5 - 1
+    input = input_transform(np_array)
     print("input shape" + str(shape(img)))
     input.unsqueeze_(0)
     return img, input
@@ -43,13 +45,13 @@ def processOutput(img_out_y):
     return mask
 
 if __name__ == "__main__":
-   model = loadModel("trained_model/bisenet-2020-11-11.onnx") 
-   img, input = loadImg("../QGameData/humanparsing/JPEGImages/0AtcjyeBpZqxPb9m.jpg")
+   model = loadModel("trained_model/bisenet-2020-11-12_19:30:13.onnx") 
+   img, input = loadImg("../QGameData/humanparsing/JPEGImages/0aGzyeLI6ftYMpq4.jpg")
    ort_inputs = {model.get_inputs()[0].name: to_numpy(input)}
    ort_outs = model.run(None, ort_inputs)
    img_out_y = ort_outs[0]
    mask = processOutput(img_out_y)
-#    img.show()
+   img.show()
    cv2.imshow("mask", mask)
-   cv2.waitKey(5000)
+   cv2.waitKey(8000)
 #    input('input any key')
