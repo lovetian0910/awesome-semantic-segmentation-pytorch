@@ -36,7 +36,6 @@ class LiveSegmentation(SegmentationDataset):
         # general resize, normalize and toTensor
         # if self.transform is not None:
         #     img = self.transform(img)
-        img = np.float32(img) / 127.5 - 1
         input_tensor = transforms.ToTensor()
         img = input_tensor(img)
         mask = mask[:,:,0]
