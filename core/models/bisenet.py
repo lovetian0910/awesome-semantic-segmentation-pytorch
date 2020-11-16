@@ -133,13 +133,15 @@ class ContextPath(nn.Module):
 
         inter_channels = 128
         in_channels = 512
+        half_in_channels = 256
         if backbone == 'resnet50':
             in_channels = 2048
+            half_in_channels = 1024
         self.global_context = _GlobalAvgPooling(in_channels, inter_channels, norm_layer)
 
         self.arms = nn.ModuleList(
-            [AttentionRefinmentModule(512, inter_channels, norm_layer, **kwargs),
-             AttentionRefinmentModule(256, inter_channels, norm_layer, **kwargs)]
+            [AttentionRefinmentModule(in_channels, inter_channels, norm_layer, **kwargs),
+             AttentionRefinmentModule(half_in_channels, inter_channels, norm_layer, **kwargs)]
         )
         self.refines = nn.ModuleList(
             [_ConvBNReLU(inter_channels, inter_channels, 3, 1, 1, norm_layer=norm_layer),
