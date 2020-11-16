@@ -59,8 +59,8 @@ class LiveSegmentation(SegmentationDataset):
         # return im, mask, os.path.basename(image_path)
 
     def __len__(self):
-        # return len(self.items)
-        return 32
+        return len(self.items)
+        # return 32
 
     def _mask_transform(self, mask):
         target = np.array(mask).astype('int32')
