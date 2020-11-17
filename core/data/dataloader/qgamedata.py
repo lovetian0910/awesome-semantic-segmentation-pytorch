@@ -29,7 +29,7 @@ class LiveSegmentation(SegmentationDataset):
         if self.mode == 'train':
             img, mask = self._sync_transform(img, mask)
         elif self.mode == 'val':
-            img, mask = self._val_sync_transform(img, mask)
+            img, mask = self._sync_transform(img, mask)
         else:
             assert self.mode == 'testval'
             img, mask = self._img_transform(img), self._mask_transform(mask)
@@ -59,10 +59,17 @@ class LiveSegmentation(SegmentationDataset):
         # return im, mask, os.path.basename(image_path)
 
     def __len__(self):
-        return len(self.items)
-        # return 32
+        # return len(self.items)
+        return 32
 
     def _mask_transform(self, mask):
         target = np.array(mask).astype('int32')
         # target[target > 0] = 1
         return torch.from_numpy(target).long()
+
+    def _sync_transform(self, img, mask):
+        img = img.resize((self.crop_size, self.crop_size), Image.NEAREST)
+        mask = mask.resize((self.crop_size, self.crop_size), Image.NEAREST)
+        img = self._img_transform(img)
+        mask = self._mask_transform(mask)
+        return img, mask
