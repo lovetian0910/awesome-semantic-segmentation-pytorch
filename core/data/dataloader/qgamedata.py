@@ -35,11 +35,8 @@ class LiveSegmentation(SegmentationDataset):
             assert self.mode == 'testval'
             img, mask = self._img_transform(img), self._mask_transform(mask)
         # general resize, normalize and toTensor
-        # if self.transform is not None:
-        #     img = self.transform(img)
-        img = np.float32(img) / 127.5 - 1
-        input_tensor = transforms.ToTensor()
-        img = input_tensor(img)
+        if self.transform is not None:
+            img = self.transform(img)
         mask = mask[:,:,0]
         # self.process_mask(mask)
         return img, mask, os.path.basename(image_path)

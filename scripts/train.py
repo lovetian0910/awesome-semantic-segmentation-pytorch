@@ -136,7 +136,7 @@ class Trainer(object):
         # image transform
         input_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
+            transforms.Normalize([0.63658345, 0.5976706, 0.6074681], [0.30042663, 0.29670033, 0.29805037]),
         ])
         # dataset and dataloader
         data_kwargs = {'transform': input_transform, 'base_size': args.base_size, 'crop_size': args.crop_size}
@@ -256,7 +256,7 @@ class Trainer(object):
         logger.info(
             "Total training time: {} ({:.4f}s / it)".format(
                 total_training_str, total_training_time / max_iters))
-        dummy_input = torch.randn(1, 3, 256, 256)
+        dummy_input = torch.randn(1, 3, 512, 512)
         if(args.device == 'cuda'):
             dummy_input = dummy_input.cuda()
         input_names = [ "input_1" ]
