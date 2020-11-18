@@ -23,6 +23,8 @@ from core.utils.distributed import *
 from core.utils.logger import setup_logger
 from core.utils.lr_scheduler import WarmupPolyLR
 from core.utils.score import SegmentationMetric
+import cv2
+import numpy as np
 
 
 def parse_args():

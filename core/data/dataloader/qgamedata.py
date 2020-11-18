@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from torchvision import transforms
 from .segbase import SegmentationDataset
+import cv2
 
 class LiveSegmentation(SegmentationDataset):
     NUM_CLASS = 5
@@ -36,31 +37,16 @@ class LiveSegmentation(SegmentationDataset):
         # general resize, normalize and toTensor
         # if self.transform is not None:
         #     img = self.transform(img)
+        img = img / 127.5 - 1
         input_tensor = transforms.ToTensor()
         img = input_tensor(img)
         mask = mask[:,:,0]
+        # self.process_mask(mask)
         return img, mask, os.path.basename(image_path)
-        # img = cv2.imread(image_path, 1)
-        # label_img = cv2.imread(label_path, 1)
-        # img = cv2.resize(img, (self.width, self.height))
-        # label_img = cv2.resize(label_img, (self.width, self.height))
-        # im = img
-        # lim = label_img
-        # lim = lim[:, :, 0]
-        # im = np.array(im).astype(np.float32)
-        # lim = np.array(lim).astype('int32')
-        # # im /= 255.0
-        # # im -= self.mean
-        # # im /= self.std
-        # im = np.transpose(im, [2, 0, 1])
-        # # torch_img = torch.from_numpy(im).float()
-        # mask = torch.from_numpy(lim).long()
-        # print("img shape = " + str(shape(im)) + " mask shape = " + str(shape(mask)))
-        # return im, mask, os.path.basename(image_path)
 
     def __len__(self):
         return len(self.items)
-        # return 32
+        # return 5
 
     def _mask_transform(self, mask):
         target = np.array(mask).astype('int32')
@@ -73,3 +59,20 @@ class LiveSegmentation(SegmentationDataset):
         img = self._img_transform(img)
         mask = self._mask_transform(mask)
         return img, mask
+
+    def process_mask(self, mask):
+        colors = np.array([[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 255]])
+        mask_img = np.zeros((len(mask), len(mask), 3))
+        for x in range(len(mask)):
+            for y in range(len(mask[x])):
+                num_class = mask[x][y]
+                mask_img[x][y] = colors[num_class]
+        cv2.imshow("mask", mask_img)
+        cv2.waitKey(8000)
+
+if __name__ == "__main__":
+    qgamedata = LiveSegmentation(crop_size = 512, split = "train")
+    for i in range(qgamedata.__len__()):
+        img, mask, _ = qgamedata.__getitem__(i)
+
+    
