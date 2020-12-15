@@ -66,20 +66,46 @@ class MobileNetV2(nn.Module):
         # building first layer
         input_channels = int(32 * multiplier) if multiplier > 1.0 else 32
         last_channels = int(1280 * multiplier) if multiplier > 1.0 else 1280
-        features = [_ConvBNReLU(3, input_channels, 3, 2, 1, relu6=True, norm_layer=norm_layer)]
+        # features = [_ConvBNReLU(3, input_channels, 3, 2, 1, relu6=True, norm_layer=norm_layer)]
 
-        # building inverted residual blocks
-        for t, c, n, s in inverted_residual_setting:
+        # # building inverted residual blocks
+        # for t, c, n, s in inverted_residual_setting:
+        #     out_channels = int(c * multiplier)
+        #     for i in range(n):
+        #         stride = s if i == 0 else 1
+        #         features.append(InvertedResidual(input_channels, out_channels, stride, t, norm_layer))
+        #         input_channels = out_channels
+
+        # # building last several layers
+        # features.append(_ConvBNReLU(input_channels, last_channels, 1, relu6=True, norm_layer=norm_layer))
+        # features.append(nn.AdaptiveAvgPool2d(1))
+        down8 = [_ConvBNReLU(3, input_channels, 3, 2, 1, relu6=True, norm_layer=norm_layer)]
+        for t, c, n, s in inverted_residual_setting[:3]:
             out_channels = int(c * multiplier)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(InvertedResidual(input_channels, out_channels, stride, t, norm_layer))
+                down8.append(InvertedResidual(input_channels, out_channels, stride, t, norm_layer))
                 input_channels = out_channels
-
-        # building last several layers
-        features.append(_ConvBNReLU(input_channels, last_channels, 1, relu6=True, norm_layer=norm_layer))
-        features.append(nn.AdaptiveAvgPool2d(1))
-        self.features = nn.Sequential(*features)
+        self.down8 = nn.Sequential(*down8)
+        down16 = []
+        for t, c, n, s in inverted_residual_setting[3:5]:
+            out_channels = int(c * multiplier)
+            for i in range(n):
+                stride = s if i == 0 else 1
+                down16.append(InvertedResidual(input_channels, out_channels, stride, t, norm_layer))
+                input_channels = out_channels
+        self.down16 = nn.Sequential(*down16)
+        down32 = []
+        for t, c, n, s in inverted_residual_setting[5:]:
+            out_channels = int(c * multiplier)
+            for i in range(n):
+                stride = s if i == 0 else 1
+                down32.append(InvertedResidual(input_channels, out_channels, stride, t, norm_layer))
+                input_channels = out_channels
+        down32.append(_ConvBNReLU(input_channels, last_channels, 1, relu6=True, norm_layer=norm_layer))
+        # down32.append(nn.AdaptiveAvgPool2d(1))
+        self.down32 = nn.Sequential(*down32)
+        # self.features = nn.Sequential(*features)
 
         self.classifier = nn.Sequential(
             nn.Dropout2d(0.2),
@@ -100,7 +126,9 @@ class MobileNetV2(nn.Module):
                     nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        x = self.features(x)
+        x = self.down8(x)
+        x = self.down16(x)
+        x = self.down32(x)
         x = self.classifier(x.view(x.size(0), x.size(1)))
         return x
 

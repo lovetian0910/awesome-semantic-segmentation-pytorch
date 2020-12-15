@@ -1,4 +1,6 @@
 """Bilateral Segmentation Network"""
+from core.models.base_models.mobilenetv2 import get_mobilenet_v2
+from core.models.base_models.xception import get_xception_71
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -116,59 +118,145 @@ class AttentionRefinmentModule(nn.Module):
 class ContextPath(nn.Module):
     def __init__(self, backbone='resnet18', pretrained_base=True, norm_layer=nn.BatchNorm2d, **kwargs):
         super(ContextPath, self).__init__()
+        self.backbone = backbone
         if backbone == 'resnet18':
             pretrained = resnet18(pretrained=pretrained_base, **kwargs)
         elif backbone == 'resnet50':
             pretrained = resnet50(pretrained=pretrained_base, **kwargs)
+        elif backbone == 'xception':
+            pretrained = get_xception_71(pretrained=pretrained_base, **kwargs)
+        elif backbone == 'mobilenet':
+            pretrained = get_mobilenet_v2(pretrained=pretrained_base, **kwargs)
         else:
             raise RuntimeError('unknown backbone: {}'.format(backbone))
-        self.conv1 = pretrained.conv1
-        self.bn1 = pretrained.bn1
-        self.relu = pretrained.relu
-        self.maxpool = pretrained.maxpool
-        self.layer1 = pretrained.layer1
-        self.layer2 = pretrained.layer2
-        self.layer3 = pretrained.layer3
-        self.layer4 = pretrained.layer4
+        if backbone == 'xception':
+            self.conv1 = pretrained.conv1
+            self.bn1 = pretrained.bn1
+            self.relu = pretrained.relu
+            self.conv2 = pretrained.conv2
+            self.bn2 = pretrained.bn2
+            self.block1 = pretrained.block1
+            self.block2_1 = pretrained.block2_1
+            self.block2_2 = pretrained.block2_2
+            self.block2 = pretrained.block2
+            self.block3 = pretrained.block3
+            self.midflow = pretrained.midflow
+            self.block20 = pretrained.block20
+            self.conv3 = pretrained.conv3
+            self.bn3 = pretrained.bn3
+            self.conv4 = pretrained.conv4
+            self.bn4 = pretrained.bn4
+            self.conv5 = pretrained.conv5
+            self.bn5 = pretrained.bn5
+            self.avgpool = pretrained.avgpool
+            self.fc = pretrained.fc
+        elif backbone == 'mobilenet':
+            self.down8 = pretrained.down8
+            self.down16 = pretrained.down16
+            self.down32 = pretrained.down32
+        else :
+            self.conv1 = pretrained.conv1
+            self.bn1 = pretrained.bn1
+            self.relu = pretrained.relu
+            self.maxpool = pretrained.maxpool
+            self.layer1 = pretrained.layer1
+            self.layer2 = pretrained.layer2
+            self.layer3 = pretrained.layer3
+            self.layer4 = pretrained.layer4
 
         inter_channels = 128
         in_channels = 512
-        half_in_channels = 256
-        if backbone == 'resnet50':
+        second_in_channels = 256
+        third_in_channels = 728
+        if backbone == 'resnet50' or backbone == 'xception':
             in_channels = 2048
-            half_in_channels = 1024
+            second_in_channels = 728
+        elif backbone == 'mobilenet':
+            in_channels = 1280
+            second_in_channels = 96
         self.global_context = _GlobalAvgPooling(in_channels, inter_channels, norm_layer)
 
         self.arms = nn.ModuleList(
             [AttentionRefinmentModule(in_channels, inter_channels, norm_layer, **kwargs),
-             AttentionRefinmentModule(half_in_channels, inter_channels, norm_layer, **kwargs)]
+             AttentionRefinmentModule(second_in_channels, inter_channels, norm_layer, **kwargs),
+             AttentionRefinmentModule(third_in_channels, inter_channels, norm_layer, **kwargs)]
         )
         self.refines = nn.ModuleList(
             [_ConvBNReLU(inter_channels, inter_channels, 3, 1, 1, norm_layer=norm_layer),
+             _ConvBNReLU(inter_channels, inter_channels, 3, 1, 1, norm_layer=norm_layer),
              _ConvBNReLU(inter_channels, inter_channels, 3, 1, 1, norm_layer=norm_layer)]
         )
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-        x = self.layer1(x)
-
         context_blocks = []
-        context_blocks.append(x)
-        x = self.layer2(x)
-        context_blocks.append(x)
-        c3 = self.layer3(x)
-        context_blocks.append(c3)
-        c4 = self.layer4(c3)
-        context_blocks.append(c4)
+        global_context = None
+        if self.backbone == 'resnet18' or self.backbone == 'resnet50':
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x = self.relu(x)
+            x = self.maxpool(x)
+            x = self.layer1(x)
+
+            context_blocks.append(x)
+            x = self.layer2(x)
+            context_blocks.append(x)
+            c3 = self.layer3(x)
+            context_blocks.append(c3)
+            c4 = self.layer4(c3)
+            context_blocks.append(c4)
+            global_context = self.global_context(c4)
+        elif self.backbone == 'xception':
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x = self.relu(x)
+
+            x = self.conv2(x)
+            x = self.bn2(x)
+            x = self.relu(x)
+
+            x = self.block1(x)
+            x = self.relu(x)
+            # c1 = x
+            x = self.block2_1(x)
+            context_blocks.append(x)
+            x = self.block2_2(x)
+            context_blocks.append(x)
+            # c2 = x
+            x = self.block3(x)
+
+            # Middle flow
+            x = self.midflow(x)
+            context_blocks.append(x)
+            # Exit flow
+            x = self.block20(x)
+            x = self.relu(x)
+            x = self.conv3(x)
+            x = self.bn3(x)
+            x = self.relu(x)
+
+            x = self.conv4(x)
+            x = self.bn4(x)
+            x = self.relu(x)
+
+            x = self.conv5(x)
+            x = self.bn5(x)
+            x = self.relu(x)
+            context_blocks.append(x)
+            global_context = self.global_context(x)
+        elif self.backbone == 'mobilenet':
+            x = self.down8(x)
+            context_blocks.append(x)
+            x = self.down16(x)
+            context_blocks.append(x)
+            x = self.down32(x)
+            context_blocks.append(x)
+            global_context = self.global_context(x)
         context_blocks.reverse()
 
-        global_context = self.global_context(c4)
+        
         last_feature = global_context
         context_outputs = []
-        for i, (feature, arm, refine) in enumerate(zip(context_blocks[:2], self.arms, self.refines)):
+        for i, (feature, arm, refine) in enumerate(zip(context_blocks[:-1], self.arms, self.refines)):
             feature = arm(feature)
             feature += last_feature
             last_feature = F.interpolate(feature, size=context_blocks[i + 1].size()[2:],

@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('--backbone', type=str, default='resnet50',
                         choices=['vgg16', 'resnet18', 'resnet50',
                                  'resnet101', 'resnet152', 'densenet121',
-                                 'densenet161', 'densenet169', 'densenet201'],
+                                 'densenet161', 'densenet169', 'densenet201', 'xception', 'mobilenet'],
                         help='backbone name (default: vgg16)')
     parser.add_argument('--dataset', type=str, default='pascal_voc',
                         choices=['pascal_voc', 'pascal_aug', 'ade20k',

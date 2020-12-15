@@ -5,7 +5,7 @@ import cv2
 import torchvision.transforms as transforms
 import numpy as np
 from PIL import Image
-
+crop_size = 384
 def to_numpy(tensor):
     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
@@ -17,13 +17,13 @@ def loadImg(img_name):
     # image transform
     input_transform = transforms.Compose([
         transforms.ToTensor(),
-        # transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
+        transforms.Normalize([0.63658345, 0.5976706, 0.6074681], [0.30042663, 0.29670033, 0.29805037]),
     ])
     img = Image.open(img_name).convert('RGB')
-    img = img.resize((256, 256), Image.NEAREST)
-    np_array = np.array(img).astype(np.float32)
-    np_array = np_array / 127.5 - 1
-    input = input_transform(np_array)
+    img = img.resize((crop_size, crop_size), Image.NEAREST)
+    # np_array = np.array(img).astype(np.float32)
+    # np_array = np_array / 127.5 - 1
+    input = input_transform(img)
     print("input shape" + str(shape(img)))
     input.unsqueeze_(0)
     return img, input
@@ -34,18 +34,15 @@ def processOutput(img_out_y):
     print(shape(img_out_y))
     score = np.array(img_out_y).astype(np.float32)
     score = np.transpose(score, [1, 2, 0])
-    mask = np.zeros((256, 256, 3))
-    maskMap = np.zeros((256, 256, 1))
+    mask = np.zeros((crop_size, crop_size, 3))
     for x in range(len(score)):
         for y in range(len(score[0])):
             maxindex = np.argmax(score[x][y])
-            if maxindex != 0:
-                print(str(x) + " " + str(y) + " " + str(maxindex))
             mask[x][y] = colors[maxindex]
     return mask
 
 if __name__ == "__main__":
-   model = loadModel("trained_model/bisenet-2020-11-12_19:30:13.onnx") 
+   model = loadModel("trained_model/bisenet-dim-test.onnx") 
    img, input = loadImg("../QGameData/humanparsing/JPEGImages/0aGzyeLI6ftYMpq4.jpg")
    ort_inputs = {model.get_inputs()[0].name: to_numpy(input)}
    ort_outs = model.run(None, ort_inputs)
