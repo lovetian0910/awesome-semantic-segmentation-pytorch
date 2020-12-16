@@ -261,7 +261,7 @@ class Trainer(object):
             dummy_input = dummy_input.cuda()
         input_names = [ "input_1" ]
         output_names = [ "output1" ]
-        today = time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())
+        today = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
         model_name = "bisenet-" + str(today) + ".onnx"
         torch.onnx.export(self.model, dummy_input, "trained_model/" +model_name, verbose=True, input_names=input_names, output_names=output_names, opset_version=11)
 
