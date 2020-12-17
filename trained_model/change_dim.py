@@ -1,7 +1,7 @@
 import onnx
-size = 384
+size = 256
 if __name__ == "__main__":
-    model = onnx.load_model("trained_model/bisenet-2020-11-18_23:03:39.onnx")
+    model = onnx.load_model("trained_model/bisenet-mobilenet-256.onnx")
     d = model.graph.input[0].type.tensor_type.shape.dim
     print(d)
     d[2].dim_value = size
@@ -11,4 +11,4 @@ if __name__ == "__main__":
         d[2].dim_value = size
         d[3].dim_value = size
         print(d)
-    onnx.save_model(model,"trained_model/bisenet-dim-test.onnx" )
+    onnx.save_model(model,"trained_model/bisenet-mobilenet-256-convert.onnx" )

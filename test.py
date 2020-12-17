@@ -5,7 +5,7 @@ import cv2
 import torchvision.transforms as transforms
 import numpy as np
 from PIL import Image
-crop_size = 384
+crop_size = 256
 def to_numpy(tensor):
     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
@@ -42,7 +42,7 @@ def processOutput(img_out_y):
     return mask
 
 if __name__ == "__main__":
-   model = loadModel("trained_model/bisenet-dim-test.onnx") 
+   model = loadModel("trained_model/bisenet-mobilenet-256-convert.onnx") 
    img, input = loadImg("../QGameData/humanparsing/JPEGImages/0aGzyeLI6ftYMpq4.jpg")
    ort_inputs = {model.get_inputs()[0].name: to_numpy(input)}
    ort_outs = model.run(None, ort_inputs)
