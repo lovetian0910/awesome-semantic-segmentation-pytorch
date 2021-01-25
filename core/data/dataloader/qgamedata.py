@@ -15,7 +15,10 @@ class LiveSegmentation(SegmentationDataset):
         if split == 'val':
             split = 'test'
         f = open(root + file_path + split + ".txt", 'r')
+        f_pk = open(root + "pk_" + split + ".txt", 'r')
         self.items = f.readlines()
+        self.items.append(f_pk.readlines)
+        print("dataset: " + split + " size = " + str(len(self.items)))
 
     def __getitem__(self, idx):
         item = self.items[idx]
