@@ -256,7 +256,7 @@ class Trainer(object):
         logger.info(
             "Total training time: {} ({:.4f}s / it)".format(
                 total_training_str, total_training_time / max_iters))
-        dummy_input = torch.randn(1, 3, 512, 512)
+        dummy_input = torch.randn(1, 3, self.args.crop_size, self.args.crop_size)
         if(args.device == 'cuda'):
             dummy_input = dummy_input.cuda()
         input_names = [ "input_1" ]
